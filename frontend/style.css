@@ -31,6 +31,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 h1, h2, h3, h4 { font-family: var(--font-titles); margin-bottom: 10px; }
@@ -44,6 +45,7 @@ h1, h2, h3, h4 { font-family: var(--font-titles); margin-bottom: 10px; }
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #444;
+    flex-shrink: 0;
 }
 
 .logo { font-size: 24px; font-weight: bold; font-family: var(--font-titles); }
@@ -71,8 +73,12 @@ h1, h2, h3, h4 { font-family: var(--font-titles); margin-bottom: 10px; }
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
-/* Coluna Esquerda & Direita */
-.titulares, .historico { width: 300px; }
+/* Coluna Esquerda - Titulares */
+.titulares { 
+    width: 260px; 
+    flex-shrink: 0;
+    overflow-y: auto;
+}
 
 .jogador {
     display: flex;
@@ -107,79 +113,172 @@ h1, h2, h3, h4 { font-family: var(--font-titles); margin-bottom: 10px; }
     flex-direction: column;
     align-items: center;
     gap: 15px;
+    overflow-y: auto;
 }
 
 .campo-container {
     width: 100%;
     max-width: 800px;
-    aspect-ratio: 8 / 5; /* ISTO RESOLVE O PROBLEMA DO ZOOM E DAS ÁREAS CINZENTAS */
+    aspect-ratio: 8 / 5;
     position: relative;
     cursor: crosshair;
-    overflow: hidden; /* Corta qualquer clique que tente sair do campo */
+    overflow: hidden;
+    border-radius: var(--radius-duo);
 }
 
 .linha-tempo-container {
-    width: 800px;
+    width: 100%;
+    max-width: 800px;
     padding: 15px 20px;
 }
 
 input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
 
 /* Reservas (Integrados na área do campo) */
-.reservas { width: 800px; padding: 15px; }
+.reservas { 
+    width: 100%;
+    max-width: 800px; 
+    padding: 15px; 
+}
 .reservas h4 { color: #888; font-size: 14px; margin-bottom: 5px; }
-.lista-reservas { display: flex; gap: 10px; }
+.lista-reservas { display: flex; gap: 10px; flex-wrap: wrap; }
 .lista-reservas .jogador { padding: 8px 12px; margin-bottom: 0; font-size: 14px; }
 
-/* Histórico (Coluna Direita) */
-.historico h3 { color: var(--duo-blue); }
-.duo-list {
-    margin-top: 15px;
-    overflow-y: auto;
-    max-height: calc(100vh - 120px);
+/* ========================================= */
+/* HISTÓRICO - COLUNA DIREITA (CORRIGIDO) */
+/* ========================================= */
+.historico { 
+    width: 300px; 
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 140px);
+    position: sticky;
+    top: 20px;
 }
 
+.historico h3 { 
+    color: var(--duo-blue); 
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--duo-green-primary);
+    flex-shrink: 0;
+}
+
+#lista-historico {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 5px;
+    padding-right: 5px;
+}
+
+/* Scrollbar personalizada */
+#lista-historico::-webkit-scrollbar {
+    width: 6px;
+}
+
+#lista-historico::-webkit-scrollbar-track {
+    background: #3d3d4a;
+    border-radius: 10px;
+}
+
+#lista-historico::-webkit-scrollbar-thumb {
+    background: var(--duo-green-primary);
+    border-radius: 10px;
+}
+
+/* Itens do histórico */
 .item-historico {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 10px 12px;
     background-color: #444;
     margin-bottom: 8px;
-    border-radius: 10px;
+    border-radius: 12px;
+    font-size: 13px;
+    transition: transform 0.2s;
+    border-left: 3px solid var(--duo-green-primary);
+    cursor: pointer;
+}
+
+.item-historico:hover {
+    transform: translateX(-3px);
+    background-color: #4a4a4a;
+}
+
+.info-historico {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.info-historico strong { 
+    color: var(--duo-green-primary); 
+}
+
+.historico-tempo {
+    color: var(--duo-green-primary);
+    font-weight: bold;
+    font-size: 11px;
+    background: #333;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.btn-excluir {
+    background: none; 
+    border: none; 
+    font-size: 16px; 
+    cursor: pointer;
+    opacity: 0.6; 
+    transition: opacity 0.2s;
+    color: #ff5555;
+}
+
+.btn-excluir:hover { 
+    opacity: 1; 
+    transform: scale(1.1);
+}
+
+/* Mensagem quando não há lances */
+.sem-lances {
+    text-align: center;
+    color: #888;
+    padding: 20px;
     font-size: 14px;
 }
 
-.info-historico strong { color: #6beb09; }
+/* ========================================= */
+/* MODAL E BOTÕES */
+/* ========================================= */
 
-.btn-excluir {
-    background: none; border: none; font-size: 16px; cursor: pointer;
-    opacity: 0.6; transition: opacity 0.2s;
-}
-.btn-excluir:hover { opacity: 1; transform: scale(1.1); }
-
-/* Modal de Ações (Design Arredondado Duolingo) */
-.duo-modal {
-    position: absolute;
-    background-color: var(--duo-gray-2);
-    border: 3px solid var(--duo-green-primary);
-    padding: 20px;
-    border-radius: var(--radius-duo);
-    box-shadow: 0px 8px 30px rgba(0,0,0,0.6);
-    z-index: 100;
-    width: 200px;
+/* Botão estático */
+.button { 
+    display: inline-block; 
+    color: white; 
+    text-decoration: none; 
+    background: #056839; 
+    padding: 10px 20px;
+    border-radius: 12px; 
+    font-size: 14px; 
+    font-weight: bold;
+    transition: background 0.3s; 
 }
 
-.escondido { display: none; }
+.button:hover { 
+    background: #3daa57;
+    transform: scale(1.05);
+}
 
-/* Botão estatica */
-.button { display: inline-block; color: white; text-decoration: none; background: #056839; padding: 15px 25px;
-    border-radius: 5px; font-size: 18px; margin: 10px; margin-left: 410px; transition: background 0.3s; }
-    
 /* Botões de Ação (Estilo Duolingo com Sombra 3D) */
 .botoes-acao {
-    display: flex; flex-direction: column;
-    gap: 10px; margin: 20px 0;
+    display: flex; 
+    flex-direction: column;
+    gap: 10px; 
+    margin: 20px 0;
 }
 
 .btn-acao {
@@ -190,59 +289,92 @@ input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
     border-radius: 12px;
     font-weight: bold;
     font-size: 15px;
-    box-shadow: var(--shadow-duo); /* Sombra estilo Duolingo */
+    box-shadow: var(--shadow-duo);
     transition: filter 0.2s, transform 0.1s;
 }
 
-.btn-acao:active { transform: translateY(3px); box-shadow: none; } /* Simula o clique */
+.btn-acao:active { transform: translateY(3px); box-shadow: none; }
 .btn-acao:hover { filter: brightness(1.1); }
 
-/* Paleta de Cores para Botões de Ação (Referências imagem 2, 3) */
+/* Paleta de Cores para Botões de Ação */
 .btn-duo-primary { background-color: var(--duo-green-primary); }
 .btn-duo-azul { background-color: var(--duo-blue); }
 .btn-duo-vermelho { background-color: var(--duo-red); }
 .btn-duo-laranja { background-color: var(--duo-orange); }
 .btn-duo-roxo { background-color: var(--duo-purple); }
-.btn-duo-amarelo { background-color: var(--duo-yellow); color: #333; } /* Amarelo precisa texto escuro */
+.btn-duo-amarelo { background-color: var(--duo-yellow); color: #333; }
 
 .btn-cancelar {
-    display: block; width: 100%; padding: 10px;
-    cursor: pointer; background: none; color: #888; border: none; font-weight: bold; margin-top: 10px;
+    display: block; 
+    width: 100%; 
+    padding: 10px;
+    cursor: pointer; 
+    background: none; 
+    color: #888; 
+    border: none; 
+    font-weight: bold; 
+    margin-top: 10px;
 }
 .btn-cancelar:hover { color: var(--duo-red); }
 
+/* Modal */
+.duo-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--duo-gray-2);
+    border: 3px solid var(--duo-green-primary);
+    padding: 25px;
+    border-radius: var(--radius-duo);
+    box-shadow: 0px 8px 30px rgba(0,0,0,0.6);
+    z-index: 100;
+    min-width: 280px;
+    max-width: 350px;
+}
+
+.escondido { display: none; }
+
 /* ========================================= */
-/* AS BOLINHAS DO MAPA (O que estava faltando) */
+/* BOLINHAS DO MAPA */
 /* ========================================= */
 .ponto {
     position: absolute;
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    transform: translate(-50%, -50%); /* Centraliza o ponto exato no mouse */
-    border: 3px solid var(--duo-white); /* Borda mais grossa estilo cartoon */
+    transform: translate(-50%, -50%);
+    border: 3px solid var(--duo-white);
     cursor: pointer;
-    box-shadow: 0px 3px 0px rgba(0,0,0,0.3); /* Sombra 3D */
+    box-shadow: 0px 3px 0px rgba(0,0,0,0.3);
     transition: transform 0.2s;
     z-index: 5;
 }
 
-/* Cores de cada ação conectadas com a nossa paleta Duolingo */
 .passe-certo { background-color: var(--duo-blue); }
 .passe-errado { background-color: var(--duo-red); }
 .interceptacao { background-color: var(--duo-orange); }
 .finalizacao { background-color: var(--duo-purple); }
 .gol { 
     background-color: var(--duo-yellow); 
-    border-color: #333; /* Borda escura para dar destaque no amarelo */
+    border-color: #333;
     width: 22px; 
     height: 22px; 
 }
 
-/* Customização da Barra de Tempo (Mobile/Duolingo) */
+.ponto-destaque {
+    transform: translate(-50%, -50%) scale(2.5) !important;
+    box-shadow: 0 0 20px white !important;
+    z-index: 100 !important;
+    transition: all 0.3s ease;
+}
+
+/* ========================================= */
+/* RANGE SLIDER (BARRA DE TEMPO) */
+/* ========================================= */
 input[type=range] {
     -webkit-appearance: none;
-    appearance: none; /* <-- Adicione esta linha para tirar o aviso */
+    appearance: none;
     width: 100%;
     height: 8px;
     background: #444;
@@ -251,7 +383,6 @@ input[type=range] {
     margin-top: 15px;
 }
 
-/* A "bolinha" (thumb) da barra */
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -264,33 +395,49 @@ input[type=range]::-webkit-slider-thumb {
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-/* Quando o usuário clica/pressiona o dedo na bolinha */
 input[type=range]:active::-webkit-slider-thumb {
-    transform: scale(1.5); /* Ela cresce */
+    transform: scale(1.5);
     box-shadow: 0 4px 10px rgba(0,0,0,0.6);
 }
 
-/* Animação para destacar a bolinha no mapa */
-.ponto-destaque {
-    transform: translate(-50%, -50%) scale(2.5) !important;
-    box-shadow: 0 0 20px white !important;
-    z-index: 100 !important;
-    transition: all 0.3s ease;
-}
-
-/* Escudo bloqueador de cliques (Backdrop) */
+/* ========================================= */
+/* ESCUDO BLOQUEADOR */
+/* ========================================= */
 .bloqueio-tela {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5); /* Fundo levemente escurecido */
-    z-index: 90; /* Fica acima de tudo, mas abaixo do modal (que é 100) */
-    display: none; /* Começa escondido */
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 90;
+    display: none;
 }
 
-/* Quando adicionamos esta classe, o escudo aparece e bloqueia tudo */
 .bloqueio-tela.ativo {
     display: block;
+}
+
+/* ========================================= */
+/* RESPONSIVIDADE */
+/* ========================================= */
+@media (max-width: 900px) {
+    .layout-principal {
+        flex-direction: column;
+    }
+    
+    .titulares, .historico {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        position: static;
+    }
+    
+    .historico {
+        height: auto;
+    }
+    
+    #lista-historico {
+        max-height: 150px;
+    }
 }
