@@ -331,82 +331,104 @@ function renderizarMapaELista() {
     document.querySelectorAll('.ponto').forEach(ponto => ponto.remove());
     listaHistorico.innerHTML = ''; 
 
-    // O Filtro poderoso: Traz as ações DELE, e as substituições ONDE ELE ENTROU
     const lancesFiltrados = lancesDaPartida
         .filter(l => l.atleta_id === atletaIdSelecionado || l.jogador_entrou_id === atletaIdSelecionado)
         .sort((a, b) => {
-            const tempoA = (parseInt(a.minuto_video.split(':')[0]) * 60) + parseInt(a.minuto_video.split(':')[1]);
-            const tempoB = (parseInt(b.minuto_video.split(':')[0]) * 60) + parseInt(b.minuto_video.split(':')[1]);
-            return tempoB - tempoA; // Ordenação Cronológica (Mais recente no topo)
+            const tempoA = (parseInt(a.minuto_video?.split(':')[0]) * 60) + parseInt(a.minuto_video?.split(':')[1] || 0);
+            const tempoB = (parseInt(b.minuto_video?.split(':')[0]) * 60) + parseInt(b.minuto_video?.split(':')[1] || 0);
+            return tempoB - tempoA;
         });
 
     lancesFiltrados.forEach(lance => {
         
-        // --- SE FOR SUBSTITUIÇÃO (Visual da lista diferente, sem bolinha no mapa) ---
+        // SE FOR SUBSTITUIÇÃO
         if(lance.tipo_acao === 'Substituição') {
             const item = document.createElement('div');
             item.classList.add('item-historico');
+            item.style.cursor = 'pointer';
             
             let textoHist = '';
+            let corFundo = '';
             if (lance.atleta_id === atletaIdSelecionado) {
-                // Ele Saiu
-                textoHist = `<strong>🔄 FOI SUBSTITUÍDO (Foi pro banco)</strong>`;
-                item.style.backgroundColor = 'var(--duo-red)';
-                item.style.color = 'white';
-            } else {
-                // Ele Entrou
-                textoHist = `<strong>🔄 ENTROU NA QUADRA (Titular)</strong>`;
-                item.style.backgroundColor = 'var(--duo-green-primary)';
-                item.style.color = 'white';
+                textoHist = `🔄 SAIU (Foi pro banco)`;
+                corFundo = '#650e14';
+            } else if (lance.jogador_entrou_id === atletaIdSelecionado) {
+                textoHist = `🔄 ENTROU EM CAMPO`;
+                corFundo = '#056839';
             }
-
-            item.innerHTML = `
-                <div class="info-historico" style="width:100%; text-align:center;">
-                    ${textoHist} <br><small>⏱️ ${lance.minuto_video}</small>
-                </div>
-            `;
-            // ATENÇÃO AQUI: AppendChild porque a lista já está ordenada!
-            listaHistorico.appendChild(item); 
+            
+            if (textoHist) {
+                item.style.backgroundColor = corFundo;
+                item.innerHTML = `
+                    <div class="info-historico" style="flex:1;">
+                        <strong>${textoHist}</strong>
+                        <br><small>⏱️ ${lance.minuto_video}</small>
+                    </div>
+                    <button class="btn-excluir" onclick="abrirModalEdicao(event, ${lance.id}, '${lance.tipo_acao}', '${lance.minuto_video}')" title="Editar Lance">⚙️</button>
+                `;
+                
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('btn-excluir')) {
+                        atualizarBarraDeTempo(lance.minuto_video);
+                    }
+                });
+                
+                listaHistorico.appendChild(item);
+            }
             return; 
         }
 
-        // --- SE FOR LANCE NORMAL (Gera Bolinha) ---
-        const bolinha = document.createElement('div');
-        bolinha.classList.add('ponto');
-        bolinha.id = `bolinha-${lance.id}`;
-        
-        if(lance.tipo_acao === 'Passe Certo') bolinha.classList.add('passe-certo');
-        if(lance.tipo_acao === 'Passe Errado') bolinha.classList.add('passe-errado');
-        if(lance.tipo_acao === 'Interceptação') bolinha.classList.add('interceptacao');
-        if(lance.tipo_acao === 'Finalização') bolinha.classList.add('finalizacao');
-        if(lance.tipo_acao === 'Gol') bolinha.classList.add('gol');
+        // SE FOR LANCE NORMAL (com coordenadas)
+        if (lance.coord_x && lance.coord_y) {
+            const bolinha = document.createElement('div');
+            bolinha.classList.add('ponto');
+            bolinha.id = `bolinha-${lance.id}`;
+            
+            if(lance.tipo_acao === 'Passe Certo') bolinha.classList.add('passe-certo');
+            if(lance.tipo_acao === 'Passe Errado') bolinha.classList.add('passe-errado');
+            if(lance.tipo_acao === 'Interceptação') bolinha.classList.add('interceptacao');
+            if(lance.tipo_acao === 'Finalização') bolinha.classList.add('finalizacao');
+            if(lance.tipo_acao === 'Gol') bolinha.classList.add('gol');
 
-        bolinha.style.left = `${lance.coord_x}%`;
-        bolinha.style.top = `${lance.coord_y}%`;
-        campo.appendChild(bolinha);
+            bolinha.style.left = `${lance.coord_x}%`;
+            bolinha.style.top = `${lance.coord_y}%`;
+            campo.appendChild(bolinha);
+        }
 
+        // Adiciona na lista do histórico
         const item = document.createElement('div');
         item.classList.add('item-historico');
-        item.style.cursor = 'pointer'; 
+        item.style.cursor = 'pointer';
+        
+        let emoji = '';
+        if (lance.tipo_acao === 'Passe Certo') emoji = '✅';
+        else if (lance.tipo_acao === 'Passe Errado') emoji = '❌';
+        else if (lance.tipo_acao === 'Interceptação') emoji = '🛡️';
+        else if (lance.tipo_acao === 'Finalização') emoji = '🎯';
+        else if (lance.tipo_acao === 'Gol') emoji = '⚽';
         
         item.innerHTML = `
-            <div class="info-historico"><strong>${lance.nome_atleta}</strong>: ${lance.tipo_acao} <br><small>⏱️ ${lance.minuto_video}</small></div>
-            <button class="btn-excluir" onclick="abrirModalEdicao(event, ${lance.id}, '${lance.tipo_acao}', '${lance.minuto_video}')" title="Opções">⚙️</button>
+            <div class="info-historico" style="flex:1;">
+                <strong>${lance.nome_atleta || lance.atleta_id}</strong>: ${emoji} ${lance.tipo_acao}
+                <br><small>⏱️ ${lance.minuto_video}</small>
+            </div>
+            <button class="btn-excluir" onclick="abrirModalEdicao(event, ${lance.id}, '${lance.tipo_acao}', '${lance.minuto_video}')" title="Editar Lance">⚙️</button>
         `;
 
-        item.addEventListener('click', () => {
-            atualizarBarraDeTempo(lance.minuto_video);
-            const bolinhaAlvo = document.getElementById(`bolinha-${lance.id}`);
-            if(bolinhaAlvo) {
-                bolinhaAlvo.classList.add('ponto-destaque');
-                setTimeout(() => bolinhaAlvo.classList.remove('ponto-destaque'), 1500);
+        item.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('btn-excluir')) {
+                atualizarBarraDeTempo(lance.minuto_video);
+                const bolinhaAlvo = document.getElementById(`bolinha-${lance.id}`);
+                if(bolinhaAlvo) {
+                    bolinhaAlvo.classList.add('ponto-destaque');
+                    setTimeout(() => bolinhaAlvo.classList.remove('ponto-destaque'), 1500);
+                }
             }
         });
 
         listaHistorico.appendChild(item); 
     });
 
-    // Pinta a barra de vermelho dinamicamente
     atualizarCoresDaBarra();
 }
 
@@ -416,8 +438,30 @@ function renderizarMapaELista() {
 function abrirModalEdicao(eventoContexto, id, acaoAtual, minutoAtual) {
     eventoContexto.stopPropagation(); 
     idLanceEmEdicao = id;
-    selectEditarAcao.value = acaoAtual;
-    inputEditarMinuto.value = minutoAtual;
+    
+    // Verifica se é substituição para mostrar no select
+    if (selectEditarAcao) {
+        // Se for substituição, adiciona a opção no select se não existir
+        let temOpcaoSub = false;
+        for (let i = 0; i < selectEditarAcao.options.length; i++) {
+            if (selectEditarAcao.options[i].value === 'Substituição') {
+                temOpcaoSub = true;
+                break;
+            }
+        }
+        if (!temOpcaoSub) {
+            const option = document.createElement('option');
+            option.value = 'Substituição';
+            option.textContent = 'Substituição';
+            selectEditarAcao.appendChild(option);
+        }
+        selectEditarAcao.value = acaoAtual;
+    }
+    
+    if (inputEditarMinuto) {
+        inputEditarMinuto.value = minutoAtual;
+    }
+    
     modalEdicao.style.position = 'fixed';
     modalEdicao.style.left = `50%`;
     modalEdicao.style.top = `50%`;
@@ -432,9 +476,18 @@ document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
 });
 
 document.getElementById('btn-salvar-edicao').addEventListener('click', () => {
-    const dadosEditados = { tipo_acao: selectEditarAcao.value, minuto_video: inputEditarMinuto.value };
+    const novoTipo = selectEditarAcao.value;
+    const novoMinuto = inputEditarMinuto.value;
+    
+    const dadosEditados = { 
+        tipo_acao: novoTipo, 
+        minuto_video: novoMinuto 
+    };
+    
     fetch(`http://localhost:3000/api/eventos/${idLanceEmEdicao}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dadosEditados)
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(dadosEditados)
     }).then(() => {
         carregarDadosDoBanco();
         modalEdicao.classList.add('escondido');

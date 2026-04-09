@@ -5,22 +5,17 @@ const cors = require('cors');
 const app = express();
 const porta = 3000;
 
-// Permite que o seu HTML (Frontend) converse com a API sem bloqueios de segurança
 app.use(cors());
-
-// Permite que a API receba os dados das coordenadas em formato JSON
 app.use(express.json());
 
-// 1. Criando a conexão com o banco de dados
 const conexao = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'alunolab', // A senha do seu MySQL Workbench
-    database: 'power_soccer', // O nome do banco que criamos
+    password: 'alunolab',
+    database: 'power_soccer',
     port: "3303"
 });
 
-// 2. Testando a conexão na hora que o servidor ligar
 conexao.connect((erro) => {
     if (erro) {
         console.error('❌ Erro ao conectar no MySQL:', erro.message);
@@ -29,20 +24,16 @@ conexao.connect((erro) => {
     console.log('✅ Conexão com o banco power_soccer estabelecida com sucesso!');
 });
 
-// 3. Rota de teste para ver se a API está viva
 app.get('/', (req, res) => {
     res.json({ mensagem: 'A API do Scout Power Soccer está rodando!' });
 });
 
-// Rota para salvar a ação do jogo (Atualizada para Substituição)
 app.post('/api/eventos', (req, res) => {
-    // Agora recebemos também o jogador_entrou_id
     const { atleta_id, minuto_video, tipo_acao, coord_x, coord_y, jogador_entrou_id } = req.body;
     
     const sql = `INSERT INTO eventos_scout (partida_id, atleta_id, usuario_id, periodo, minuto_video, tipo_acao, coord_x, coord_y, jogador_entrou_id) 
                  VALUES (1, ?, 1, '1º Tempo', ?, ?, ?, ?, ?)`;
     
-    // Passamos o jogador_entrou_id para o MySQL (ou nulo se for um lance normal)
     conexao.query(sql, [atleta_id, minuto_video, tipo_acao, coord_x || null, coord_y || null, jogador_entrou_id || null], (erro, resultados) => {
         if (erro) {
             console.error('Erro ao salvar no banco:', erro);
@@ -52,8 +43,6 @@ app.post('/api/eventos', (req, res) => {
     });
 });
 
-
-// Rota para buscar as Estatísticas Globais dos Jogadores
 app.get('/api/estatisticas', (req, res) => {
     const sql = `
         SELECT 
@@ -78,7 +67,6 @@ app.get('/api/estatisticas', (req, res) => {
     });
 });
 
-// Rota para buscar os lances de uma partida específica (para redesenhar o mapa)
 app.get('/api/eventos/partida/:id', (req, res) => {
     const idPartida = req.params.id;
     const sql = `
@@ -94,7 +82,6 @@ app.get('/api/eventos/partida/:id', (req, res) => {
     });
 });
 
-// Rota para deletar um lance específico
 app.delete('/api/eventos/:id', (req, res) => {
     const idLance = req.params.id;
     const sql = 'DELETE FROM eventos_scout WHERE id = ?';
@@ -108,7 +95,6 @@ app.delete('/api/eventos/:id', (req, res) => {
     });
 });
 
-// Rota para ATUALIZAR (Alterar) um lance
 app.put('/api/eventos/:id', (req, res) => {
     const idLance = req.params.id;
     const { tipo_acao, minuto_video } = req.body;
@@ -120,7 +106,30 @@ app.put('/api/eventos/:id', (req, res) => {
         res.json({ mensagem: 'Lance atualizado com sucesso!' });
     });
 });
-// 4. Ligando o servidor
+
+// Rota para resumo da Home (cards)
+app.get('/api/resumo', (req, res) => {
+    const sqlAtletas = 'SELECT COUNT(*) as total FROM atletas';
+    const sqlPartidas = 'SELECT COUNT(*) as total FROM partidas';
+    const sqlScouts = 'SELECT COUNT(*) as total FROM eventos_scout';
+    // Calcula média de gols baseado nos eventos do tipo 'Gol'
+    const sqlMediaGols = `SELECT ROUND(COUNT(*) / (SELECT COUNT(*) FROM partidas), 1) as media 
+                          FROM eventos_scout 
+                          WHERE tipo_acao = 'Gol'`;
+
+    Promise.all([
+        new Promise((resolve, reject) => conexao.query(sqlAtletas, (err, result) => err ? reject(err) : resolve(result[0].total))),
+        new Promise((resolve, reject) => conexao.query(sqlPartidas, (err, result) => err ? reject(err) : resolve(result[0].total))),
+        new Promise((resolve, reject) => conexao.query(sqlScouts, (err, result) => err ? reject(err) : resolve(result[0].total))),
+        new Promise((resolve, reject) => conexao.query(sqlMediaGols, (err, result) => err ? reject(err) : resolve(result[0]?.media || 0)))
+    ]).then(([atletas, partidas, scouts, mediaGols]) => {
+        res.json({ atletas, partidas, scouts, mediaGols });
+    }).catch(erro => {
+        console.error('Erro no resumo:', erro);
+        res.status(500).json({ error: 'Erro ao buscar resumo' });
+    });
+});
+
 app.listen(porta, () => {
     console.log(`🚀 Servidor rodando em http://localhost:${porta}`);
 });
