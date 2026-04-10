@@ -36,20 +36,27 @@ body {
 }
 
 h1, h2, h3, h4 { font-family: var(--font-titles); margin-bottom: 10px; }
-.cor-duo { color: var(--duo-green-primary); }
+.cor-power { color: var(--duo-green-primary); }
+.cor-duo { color: white; }
 
 /* Cabeçalho */
 .duo-header {
-    background-color: var(--duo-gray-2);
+    background: #2D2D2D;
     padding: 15px 30px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 3px solid #58cc71;
+    border-bottom: 3px solid #056839;
+    gap: 20px;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    flex-wrap: wrap;
+}
+
+.header-botoes{
+    display: flex;
+    gap: 15px;
 }
 
 .logo { font-size: 24px; font-weight: bold; font-family: var(--font-titles); }
@@ -220,11 +227,11 @@ input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
 }
 
 .info-historico strong { 
-    color: var(--duo-green-primary); 
+    color: white; 
 }
 
 .historico-tempo {
-    color: var(--duo-green-primary);
+    color: white;
     font-weight: bold;
     font-size: 11px;
     background: #333;
@@ -261,19 +268,17 @@ input[type=range] { width: 100%; margin-top: 10px; cursor: pointer; }
 
 /* Botão estático */
 .button { 
-    display: inline-block; 
-    color: white; 
-    text-decoration: none; 
-    background: #056839; 
+    background: #056839;
     padding: 10px 20px;
-    border-radius: 12px; 
-    font-size: 14px; 
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
     font-weight: bold;
-    transition: background 0.3s; 
+    transition: transform 0.2s;
 }
 
 .button:hover { 
-    background: #3daa57;
+    background: #0a8a4a;
     transform: scale(1.05);
 }
 
